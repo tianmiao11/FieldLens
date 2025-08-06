@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FieldLens: Virtual Live Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f7f7f7;
+    }
+    header {
+      background-color: #2d6cdf;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    main {
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      background-color: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    section {
+      margin-bottom: 40px;
+    }
+    h2 {
+      color: #2d6cdf;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      margin-top: 10px;
+      margin-right: 10px;
+      cursor: pointer;
+      background-color: #2d6cdf;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .output-box {
+      margin-top: 10px;
+      padding: 15px;
+      background-color: #eef3fd;
+      border-left: 4px solid #2d6cdf;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      border: none;
+    }
+    #progressDialog {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border: 1px solid #ccc;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      z-index: 9999;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>FieldLens: Virtual Live Demo</h1>
+    <p>An Offline AI Assistant for Crop Abnormality Detection</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>🎬 Demo Video</h2>
+      <video controls>
+        <source src="demo_video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </section>
+
+    <section>
+      <h2>📱 App Flow Simulation</h2>
+      <button onclick="runAnomalyDetection()">🚨 Anomaly Detection</button>
+      <button onclick="showQuestions()">❓ Question Generation</button>
+      <button onclick="document.getElementById('output2').style.display='block'">🔍 Multimodal Reasoning</button>
+
+      <div id="progressDialog">Processing... Please wait.</div>
+
+      <div id="processedVideo" style="display:none; margin-top:20px">
+        <h3>✅ Processed Video</h3>
+        <video controls>
+          <source src="processed_fixed.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+
+      <div class="output-box" id="questionOptions" style="display:none">
+        <p><strong>Please select a question:</strong></p>
+        <button onclick="selectQuestion('Question 1')">Question 1</button>
+        <button onclick="selectQuestion('Question 2')">Question 2</button>
+        <button onclick="selectQuestion('Question 3')">Question 3</button>
+      </div>
+
+      <div class="output-box" id="questionResult" style="display:none">
+        <p><strong>Based on:</strong> &lt;rag generation&gt;</p>
+        <p><strong>Answer:</strong> <span id="selectedAnswer"></span></p>
+      </div>
+
+      <div class="output-box" id="output2" style="display:none">
+        <strong>Input:</strong> Processed video frame + user-generated question<br>
+        <strong>Gemma 3n Output:</strong> A multimodal explanation is generated combining visual cues and agronomic knowledge to suggest pest-related anomalies.
+      </div>
+    </section>
+
+    <section>
+      <h2>🧠 How It Works</h2>
+      <ul>
+        <li>📸 Drone video → Frame extraction</li>
+        <li>🌿 ExG/NDVI detection → anomaly mask</li>
+        <li>📱 User selects abnormal frame → question generated</li>
+        <li>🔍 Retrieved knowledge → RAG-style prompt</li>
+        <li>💬 Local Gemma 3n model generates response</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>🧾 Source Code</h2>
+      <p>All code and architecture details are available here: <a href="https://github.com/YOUR_USERNAME/YOUR_REPO" target="_blank">GitHub Repository</a></p>
+    </section>
+  </main>
+
+  <script>
+    function runAnomalyDetection() {
+      const dialog = document.getElementById('progressDialog');
+      const processed = document.getElementById('processedVideo');
+      dialog.style.display = 'block';
+      processed.style.display = 'none';
+      setTimeout(() => {
+        dialog.style.display = 'none';
+        processed.style.display = 'block';
+      }, 10000); // 10 seconds
+    }
+
+    function showQuestions() {
+      document.getElementById('questionOptions').style.display = 'block';
+      document.getElementById('questionResult').style.display = 'none';
+    }
+
+    function selectQuestion(q) {
+      document.getElementById('selectedAnswer').innerText = q;
+      document.getElementById('questionResult').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
+
