@@ -1,69 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>FieldLens: Virtual Live Demo</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f7f7f7;
-    }
-    header {
-      background-color: #2d6cdf;
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    main {
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-      background-color: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    section {
-      margin-bottom: 40px;
-    }
-    h2 {
-      color: #2d6cdf;
-    }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f7f7f7; }
+    header { background-color: #2d6cdf; color: white; padding: 20px; text-align: center; }
+    main { max-width: 900px; margin: auto; padding: 20px; background-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    section { margin-bottom: 40px; }
+    h2 { color: #2d6cdf; }
     button {
-      padding: 10px 20px;
-      font-size: 1em;
-      margin-top: 10px;
-      margin-right: 10px;
+      padding: 10px 20px; font-size: 1em; margin-top: 10px; margin-right: 10px;
+      cursor: default; background-color: #ccc; color: white; border: none; border-radius: 5px;
+      transition: transform 0.2s;
+    }
+    .active-button {
+      background-color: #2d6cdf !important;
       cursor: pointer;
-      background-color: #2d6cdf;
-      color: white;
-      border: none;
-      border-radius: 5px;
     }
-    .output-box {
-      margin-top: 10px;
-      padding: 15px;
-      background-color: #eef3fd;
-      border-left: 4px solid #2d6cdf;
+    .active-button:hover {
+      transform: scale(1.05);
     }
-    video {
-      width: 100%;
-      height: auto;
-      border: none;
+    .output-box { margin-top: 10px; padding: 15px; background-color: #eef3fd; border-left: 4px solid #2d6cdf; }
+    video { width: 100%; height: auto; border: none; }
+    #progressDialog, #ragDialog, #gemmaDialog {
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: white; border: 1px solid #ccc; padding: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 9999;
     }
-    #progressDialog {
+    .question-list { margin-top: 10px; padding-left: 20px; }
+    .question-list p {
+      margin: 8px 0; padding: 8px;
+      background-color: #eef3fd; border-left: 4px solid #2d6cdf;
+      transition: transform 0.2s;
+    }
+    .question-list p:hover {
+      transform: scale(1.02);
+      cursor: pointer;
+    }
+    .chat-box {
+      background-color: #eef3fd; padding: 15px; border-radius: 10px; margin-top: 20px;
+    }
+    .grid-images { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .grid-item { text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+    .grid-item:hover { transform: scale(1.03); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+    .grid-item img { width: 100%; max-height: 200px; object-fit: cover; border: 2px solid #2d6cdf; }
+    .enlarged-img { width: 100%; max-height: 500px; object-fit: contain; margin-bottom: 20px; }
+	
+	#finalDialog {
       display: none;
       position: fixed;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       background: white;
       border: 1px solid #ccc;
       padding: 20px;
       box-shadow: 0 0 10px rgba(0,0,0,0.3);
       z-index: 9999;
+      font-size: 1.2em;
+      color: #2d6cdf;
+      text-align: center;
     }
+
   </style>
 </head>
 <body>
@@ -73,49 +72,75 @@
   </header>
 
   <main>
-    <section>
+    <section id="demoVideoSection">
       <h2>🎬 Demo Video</h2>
-      <video controls>
-        <source src="demo_video.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>
+      <video controls><source src="assets/demo_video.mp4" type="video/mp4" /></video>
     </section>
 
-    <section>
+    <section id="processedVideoSection" style="display:none">
+      <h2>🧪 Processed Output Video</h2>
+      <video controls><source src="assets/processed_fixed.mp4" type="video/mp4" /></video>
+    </section>
+
+    <section id="anomalyImagesSection" style="display:none">
+      <h2>🧭 Anomaly Areas Found</h2>
+      <p>Please select one of the anomaly areas to continue.</p>
+      <div class="grid-images">
+        <div class="grid-item" onclick="showImage('assets/00009_box.jpg')"><img src="assets/00009_box.jpg" /><p>+30m East, +10m North</p></div>
+        <div class="grid-item" onclick="showImage('assets/00039_box.jpg')"><img src="assets/00039_box.jpg" /><p>+42m East, +25m North</p></div>
+        <div class="grid-item" onclick="showImage('assets/00051_box.jpg')"><img src="assets/00051_box.jpg" /><p>+12m East, +60m North</p></div>
+        <div class="grid-item" onclick="showImage('assets/00054_box.jpg')"><img src="assets/00054_box.jpg" /><p>+75m East, +45m North</p></div>
+      </div>
+    </section>
+
+    <section id="enlargedView" style="display:none">
+      <h2>🔍 Anomaly Area Selection</h2>
+      <img id="enlargedImg" class="enlarged-img" src="" />
+    </section>
+
+    <section id="questionSelection" style="display:none">
+      <h2>🧾 Question Selection</h2>
+      <p style="color: #555; font-size: 0.95em; margin-bottom: 10px;">Please choose one question below:</p>
+      <div class="question-list">
+        <p onclick="selectGeneratedQuestion(1)">How to apply pesticides after corn lodging?</p>
+        <p onclick="selectGeneratedQuestion(2)">How to apply pesticides to corn with poor nutrition and poor growth?</p>
+        <p onclick="selectGeneratedQuestion(3)">When should I spray fertilizer?</p>
+      </div>
+    </section>
+
+    <section id="promptSection" style="display:none">
+      <h2>📄 Prompt Construction</h2>
+      <div class="output-box">
+        <p><strong>Based on:</strong> <span id="promptBase"></span></p>
+        <p><strong>Question:</strong> <span id="promptAnswer"></span></p>
+      </div>
+    </section>
+
+    <section id="gemmaChatSection" style="display:none">
+      <h2>🧠 Gemma 3n Multimodal Reasoning</h2>
+      <img id="gemmaImage" src="" class="enlarged-img" />
+      <div class="chat-box">
+        <p><strong>User:</strong></p>
+        <p id="gemmaPrompt"></p>
+      </div>
+      <div class="chat-box">
+        <p><strong>Gemma 3n:</strong></p>
+        <p id="gemmaResponse"></p>
+      </div>
+    </section>
+
+    <section id="flowSection">
       <h2>📱 App Flow Simulation</h2>
-      <button onclick="runAnomalyDetection()">🚨 Anomaly Detection</button>
-      <button onclick="showQuestions()">❓ Question Generation</button>
-      <button onclick="document.getElementById('output2').style.display='block'">🔍 Multimodal Reasoning</button>
-
+      <p style="color: #555; font-size: 0.95em; margin-bottom: 10px;">Only the blue button is available to click at each step.</p>
+      <button id="btn1" onclick="runAnomalyDetection()" class="active-button">🚨 Anomaly Detection</button>
+      <button id="btn2" onclick="showQuestions()" disabled title="Please run Anomaly Detection first.">❓ Question Generation</button>
+      <button id="btn3" onclick="showMultimodal()" disabled title="Please run Question Generation first.">🔍 Multimodal Reasoning</button>
       <div id="progressDialog">Processing... Please wait.</div>
-
-      <div id="processedVideo" style="display:none; margin-top:20px">
-        <h3>✅ Processed Video</h3>
-        <video controls>
-          <source src="processed_fixed.mp4" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-      </div>
-
-      <div class="output-box" id="questionOptions" style="display:none">
-        <p><strong>Please select a question:</strong></p>
-        <button onclick="selectQuestion('Question 1')">Question 1</button>
-        <button onclick="selectQuestion('Question 2')">Question 2</button>
-        <button onclick="selectQuestion('Question 3')">Question 3</button>
-      </div>
-
-      <div class="output-box" id="questionResult" style="display:none">
-        <p><strong>Based on:</strong> &lt;rag generation&gt;</p>
-        <p><strong>Answer:</strong> <span id="selectedAnswer"></span></p>
-      </div>
-
-      <div class="output-box" id="output2" style="display:none">
-        <strong>Input:</strong> Processed video frame + user-generated question<br>
-        <strong>Gemma 3n Output:</strong> A multimodal explanation is generated combining visual cues and agronomic knowledge to suggest pest-related anomalies.
-      </div>
+      <div id="ragDialog">RAG Processing... Please wait.</div>
+      <div id="gemmaDialog">Gemma 3n Processing... Please wait.</div>
     </section>
-
-    <section>
+	
+	<section>
       <h2>🧠 How It Works</h2>
       <ul>
         <li>📸 Drone video → Frame extraction</li>
@@ -128,32 +153,132 @@
 
     <section>
       <h2>🧾 Source Code</h2>
-      <p>All code and architecture details are available here: <a href="https://github.com/YOUR_USERNAME/YOUR_REPO" target="_blank">GitHub Repository</a></p>
+      <p>All code and architecture details are available here: <a href="https://github.com/tianmiao11/FieldLens" target="_blank">GitHub Repository</a></p>
     </section>
+	
+	<div id="finalDialog">✅ Demo flow complete. Thank you for participating!</div>
+
   </main>
 
   <script>
+    let currentBase = "";
+    let currentAnswer = "";
+    let currentImage = "";
+
     function runAnomalyDetection() {
-      const dialog = document.getElementById('progressDialog');
-      const processed = document.getElementById('processedVideo');
-      dialog.style.display = 'block';
-      processed.style.display = 'none';
+      document.getElementById('progressDialog').style.display = 'block';
       setTimeout(() => {
-        dialog.style.display = 'none';
-        processed.style.display = 'block';
-      }, 10000); // 10 seconds
+        document.getElementById('progressDialog').style.display = 'none';
+        document.getElementById('processedVideoSection').style.display = 'block';
+        document.getElementById('anomalyImagesSection').style.display = 'block';
+        document.getElementById('btn1').disabled = true;
+        document.getElementById('btn1').classList.remove('active-button');
+        document.getElementById('btn2').disabled = true;
+        document.getElementById('btn3').disabled = true;
+      }, 3000);
+    }
+
+    function showImage(src) {
+      currentImage = src;
+      document.getElementById('demoVideoSection').style.display = 'none';
+      document.getElementById('processedVideoSection').style.display = 'none';
+      document.getElementById('anomalyImagesSection').style.display = 'none';
+      document.getElementById('enlargedImg').src = src;
+      document.getElementById('enlargedView').style.display = 'block';
+      document.getElementById('btn2').disabled = false;
+      document.getElementById('btn2').classList.add('active-button');
     }
 
     function showQuestions() {
-      document.getElementById('questionOptions').style.display = 'block';
-      document.getElementById('questionResult').style.display = 'none';
+      document.getElementById('questionSelection').style.display = 'block';
+      document.getElementById('btn2').disabled = true;
+      document.getElementById('btn2').classList.remove('active-button');
     }
 
-    function selectQuestion(q) {
-      document.getElementById('selectedAnswer').innerText = q;
-      document.getElementById('questionResult').style.display = 'block';
+    function selectGeneratedQuestion(index) {
+      const baseOptions = [
+        "Maize lodging should immediately besprayed with 0.2% potassium dihydrogen phosphate + 0.1% zinc sulfate solution to enhance stalk toughness and prevent secondary breakage.",
+        "Malnourished maize should be sprayed with 1% urea + 0.5% potassium dihydrogen phosphate mixture to rapidly supplement macro-nutrients for growth promotion.",
+        "Foliar fertilizer application timing should preferably be morning or evening when temperature is lower and light intensity is weaker, facilitating foliar absorption. Avoid application during high temperature, strong light, rainy or windy conditions to prevent fertilizer loss or leaf burn."
+      ];
+      const answers = [
+        "How to apply pesticides after corn lodging?",
+        "How to apply pesticides to corn with poor nutrition and poor growth?",
+        "When should I spray fertilizer?"
+      ];
+      currentBase = baseOptions[index - 1];
+      currentAnswer = answers[index - 1];
+
+      document.getElementById('ragDialog').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('ragDialog').style.display = 'none';
+        document.getElementById('promptSection').style.display = 'block';
+        document.getElementById('promptBase').innerText = currentBase;
+        document.getElementById('promptAnswer').innerText = currentAnswer;
+        document.getElementById('btn3').disabled = false;
+        document.getElementById('btn3').classList.add('active-button');
+      }, 3000);
     }
+
+         function showMultimodal() {
+        document.getElementById('btn3')?.classList.remove('active-button');
+        document.getElementById('btn3')?.setAttribute('disabled', true);
+
+        // Hide previous sections
+        const sectionsToHide = ['enlargedView', 'questionSelection', 'promptSection'];
+        sectionsToHide.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.style.display = 'none';
+        });
+
+        const promptText = `Answer the questions in easy to understand language. Do not output irrelevant content.\nPlease refer to the document: ${currentBase}\nQuestion: ${currentAnswer}`;
+        const promptTarget = document.getElementById('gemmaPrompt');
+        document.getElementById('gemmaImage').src = currentImage;
+        promptTarget.textContent = "";
+        document.getElementById('gemmaChatSection').style.display = 'block';
+
+        let i = 0;
+        const typePrompt = setInterval(() => {
+          if (i < promptText.length) {
+            promptTarget.textContent += promptText.charAt(i++);
+          } else {
+            clearInterval(typePrompt);
+            document.getElementById('gemmaDialog').style.display = 'block';
+            setTimeout(() => {
+              document.getElementById('gemmaDialog').style.display = 'none';
+              simulateGemmaResponse();
+            }, 5000);
+          }
+        }, 30);
+      }
+
+      function simulateGemmaResponse() {
+        const responses = {
+          "How to apply pesticides after corn lodging?": "After corn is knocked over(lodging), you should spray it with a solution of: 0.2% potassium dihydrogen phosphate, 0.1% zinc sulfate This spray helps make the stalks stronger and prevents them from breaking again.",
+          "How to apply pesticides to corn with poor nutrition and poor growth?": "To apply pesticides (in this casea nutrient mixture) to maize with poor nutrition and growth, you should spray a mixture of 1% urea and 0.5% potassiumdi hydrogen phosphate.This mixture helps to quickly supplement the maize with the necessary nutrients for better growth.",
+          "When should I spray fertilizer?": "You should spray fertilizer in the morning or evening when the temperature is lower and the sunlight isn't too strong. This helps the plant absorb the fertilizer better. Avoid spraying during hot, sunny, rainy, or windy conditions to prevent the fertilizer from being washed away or burning the leaves."
+        };
+        const responseText = responses[currentAnswer];
+        const responseEl = document.getElementById('gemmaResponse');
+        responseEl.textContent = "";
+        let j = 0;
+        const interval = setInterval(() => {
+          if (j < responseText.length) {
+            responseEl.textContent += responseText.charAt(j++);
+          } else {
+            clearInterval(interval);
+			showFinalDialog();
+          }
+        }, 30);
+      }
+	  
+	  function showFinalDialog() {
+        setTimeout(() => {
+          document.getElementById('finalDialog').style.display = 'block';
+        }, 500);
+      }
   </script>
 </body>
 </html>
+
 
