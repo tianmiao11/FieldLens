@@ -30,62 +30,71 @@ Sparse crop regions typically exhibit lower green intensity and spatial disconti
 
 Each extracted frame is processed using the following steps:
 
-- 'Input': RGB image ('.jpg'), resolution ~'1920×1080'
-- 'ExG computation': 'ExG = 2G - R - B'
-- 'Normalization': scaled to '8-bit grayscale' ('uint8', range '0–255')
-- 'Thresholding': binary inverse, 'T = 60'
-- 'Morphology': open → close, kernel = elliptical ('7×7')
-- 'Connected Components': area ≥ '2000 px', '8-connectivity'
-- 'Masking': zero out top '50%' of image ('mask[0:H//2, :] = 0')
-- 'Output': binary mask highlighting sparse regions
-
-**Output**: Binary mask highlighting sparse growth areas.
+- `Input`: RGB image (`.jpg`), resolution ~`1920×1080`
+- `ExG computation`: `ExG = 2G - R - B`
+- `Normalization`: scaled to `8-bit grayscale` (`uint8`, range `0–255`)
+- `Thresholding`: binary inverse, `T = 60`
+- `Morphology`: open → close, kernel = elliptical (`7×7`)
+- `Connected Components`: area ≥ `2000 px`, `8-connectivity`
+- `Masking`: zero out top `50%` of image (`mask[0:H//2, :] = 0`)
+- `Output`: binary mask highlighting sparse regions
 
 ### 2. Question Generation (Template-based, RAG-style)
 
-Visual outputs are enriched with structured language prompts to produce actionable insights. A RAG-style method retrieves related domain knowledge and injects it into the prompt.
+Once abnormal crop regions are detected, visual results alone are often insufficient for practical decision-making. To address this, FieldLens incorporates a language-based layer that transforms each anomaly into a relevant, structured question. This enables users to not only see the problem, but also understand it in agronomic terms.
 
-#### Semantic Retrieval:
+RAG-style prompting enhances question relevance by retrieving semantically related content from local text corpora. This method avoids model fine-tuning and supports offline operation.
 
-- **Embedding Model**: Qwen3-Embedding-0.6B  
-- **Vector Store**: Milvus or FAISS  
-- **Top-k Retrieval**: 2  
-- **Similarity**: Cosine  
+#### Semantic Representation via Embedding
+The corpus is segmented into sentences and encoded as dense vectors to enable efficient similarity matching.
 
-#### Prompt Template:
+- Embedding Model: `Qwen3-Embedding-0.6B`
+- Output Dimensionality: `1024`
+- Pooling Strategy: `Last-token pooling` (padding-aware)
 
-```
-Based on <retrieved_text>, answer <question>
-```
+#### Indexing: Offline Semantic Retrieval
+All document embeddings are stored locally. For each query, the most relevant content is retrieved based on vector similarity.
 
-All operations are **fully offline** and optimized for Android deployment.
+- Vector Store: `Milvus or FAISS`
+- Similarity Metric: `Cosine similarity`
+- Retrieval Top-k: `2`
 
+#### Prompt Construction: Structured Template
+Retrieved texts and user questions are combined into a structured prompt for language model inference.
+
+- Prompt Format: `"Based on <retrieved_text>, answer <question>"`
+
+#### Deployment: Fully Offline Execution
+The entire pipeline runs locally without internet access, optimized for lightweight deployment on Android devices.
+
+- Deployment Mode: `Offline-capable`
+- Adaptation Options: `ONNX` / `Faiss` (mobile support)
+ 
 ### 3. Multimodal Reasoning (Gemma 3n-compatible Prompts)
 
-We use **Gemma-3n-E4b-it-int4** for local reasoning with visual + textual input.
+Multimodal reasoning is employed to synthesize visual observations with retrieved domain knowledge. After anomaly detection and question construction, a structured prompt is created, combining selected video frames with textual queries. These inputs are passed to a vision-language model to generate contextual answers grounded in both visual and semantic signals. The prompt design is explicitly tailored to match the input format expected by Gemma 3n, ensuring compatibility and optimal inference.
 
-- **Prompt format**:  
-  ```
-  <image_soft_token> In this image, <question>
-  ```
-- **Inputs**: Image + Text  
-- **Outputs**: Natural language answers grounded in both visual and semantic evidence  
-- **Deployment**: Google Edge Gallery, ONNX/mobile-compatible
+- Model: `Gemma-3n-E4b-it-int4` (Vision-Language model)
+- Input Types: `Image` + `Text` (formatted prompt)
+- Prompt Format: `"<image_soft_token> In this image, <question>"`
+- Output: Textual answer grounded in image + query
+- Deployment Mode: Offline-capable (via `Google Edge Gallery`)
+- Adaptation Options: `ONNX` / `Faiss` (mobile-compatible)
 
 ## System Demo
 
-We simulate the entire pipeline step-by-step using real aerial footage:
+To illustrate the full pipeline of **FieldLens**, we provide a step-by-step demonstration using real-world aerial footage. Each stage of the offline process is visualized as follows:
 
-### 1. Input Image
+### 1. Input Image (from agricultural drone video)
 
-Raw drone frame captured from a cornfield.
+Raw frame captured from a cornfield using an agricultural drone.
 
 ![Figure 1: Original RGB Image](data/images/original.jpg)  
 **Figure 1**: Original RGB Image
 
 ### 2. Anomaly Detection
 
-ExG-based segmentation and morphological filtering reveal sparse areas.
+Binary segmentation highlights sparse growth regions based on ExG index and morphological filtering.
 
 ![Figure 2: ExG Vegetation Index Map](data/images/exg.jpg)  
 **Figure 2**: ExG Vegetation Index Map
@@ -98,40 +107,38 @@ ExG-based segmentation and morphological filtering reveal sparse areas.
 
 ### 3. Question Generation
 
-Structured prompts built for each anomaly.
+Based on detected anomaly, a RAG-style prompt is constructed to formulate an agronomic question.
 
-- **Question**: What causes sparse crop growth here?  
-- **Retrieved Text**: "According to agronomic guidelines, pest activity increases in the tasseling stage..."  
-- **Prompt**:  
-  ```
-  Please answer <question> based on <retrieved_text>
-  ```
+```
+Question: What causes sparse crop growth here?
+Retrieved: “According to agronomic guidelines, pest activity increases in the tasseling stage...”
+Prompt: Please answer <question> based on <retrieved_text>
+```
 
-### 4. Multimodal Reasoning
+### 4. Multimodal Reasoning (Gemma 3n output)
+Final reasoning result generated by Gemma 3n using image + prompt.
 
 ![Figure 5: Multimodal reasoning example using a Gemma 3n-compatible prompt](data/images/gemma.jpg)  
 **Figure 5**: Multimodal reasoning example using a Gemma 3n-compatible prompt
 
 ### Interactive Demo
 
-Due to offline design (local Android deployment), we do not provide a live cloud demo.  
-However, we created a **web-based walkthrough** simulating the app flow:
-
-🔗 [https://tianmiao11.github.io/FieldLens/](https://tianmiao11.github.io/FieldLens/)
+Due to the offline architecture of the application — which is designed to run entirely on local Android devices — a traditional cloud-based live demo is not available. To illustrate the user interaction flow and highlight the core features, a web-based walkthrough has been developed to simulate the app experience.
+Interactive mockup: 
+[https://tianmiao11.github.io/FieldLens/](https://tianmiao11.github.io/FieldLens/)
 
 ## Future Improvements
 
 ### 1. Enhanced Anomaly Classification  
-Support multiple crop stress types (drought, disease, lodging) using multi-class segmentation and phenological phase adaptation.
+The current system focuses solely on detecting sparse vegetation. However, anomaly patterns vary significantly across different crop growth stages. Future versions may incorporate multi-class segmentation to identify various stressors such as disease, drought, or lodging, with adaptive modes tailored to different phenological phases.
 
-### 2. Multimodal Reasoning on Drones  
-Embed quantized models onto agricultural drones for **fully autonomous** and **offline** decision-making.
+### 2. Deploy Multimodal Inference on Agricultural Drones
+Rather than relying on mobile or desktop devices, future iterations may embed quantized vision-language models directly onto agricultural drones. This would enable fully offline, on-device reasoning—allowing autonomous, real-time decision-making in the field without human intervention or internet connectivity.
 
-### 3. Field-Level Reporting  
-Aggregate frame-level detections into a full-field diagnostic report with spatial analytics and drone-action guidance (e.g. spraying, replanting).
+### 3. Field-Level Report Generation & Actionable Feedback 
+Instead of analyzing frames in isolation, the system can aggregate outputs into field-level diagnostic reports. These reports would include spatial summaries and recommendations for targeted interventions. The insights could be used to guide drones for site-specific actions such as localized spraying, fertilization, or replanting, enabling precision agriculture at the plant level.
 
 ## Outro
 
-The pipeline—**anomaly detection**, **question generation**, and **multimodal reasoning**—is **crop-agnostic** and expandable to other domains like forestry or conservation.
-
-This project represents a **new class of edge AI systems**, combining **multimodal models like Gemma 3n** with traditional agricultural hardware. The result: private, offline, field-deployable intelligence that helps farmers act—without needing the cloud.
+The underlying pipeline—anomaly detection, question generation, and multimodal reasoning—is crop-agnostic and adaptable. Its potential applications extend beyond cornfields to other agricultural domains, or even forest monitoring and environmental conservation.
+This project showcases not just a functional prototype, but a glimpse into the future of edge intelligence. By deploying multimodal models like Gemma 3n in conjunction with traditional hardware such as agricultural drones, we begin to see the contours of a new class of field-deployable, offline-capable robotic systems.
