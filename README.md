@@ -8,23 +8,17 @@ This is the YouTube video link demonstrating the FieldLens application:
 
 ## Introduction
 
-Corn farming, especially in remote and rural areas, often faces a critical challenge: identifying plant growth problems like sparse emergence or pest damage at an early stage—before it's too late. These issues typically emerge during sensitive phases such as tasseling, when quick intervention is crucial for protecting yields. However, many farmers lack the tools, expertise, or connectivity to detect and interpret these problems in time. What makes this challenge more severe is that visual abnormalities o...
+Corn farming, especially in remote and rural areas, often faces a critical challenge: identifying plant growth problems like sparse emergence or pest damage at an early stage—before it's too late. These issues typically emerge during sensitive phases such as tasseling, when quick intervention is crucial for protecting yields. However, many farmers lack the tools, expertise, or connectivity to detect and interpret these problems in time. What makes this challenge more severe is that visual abnormalities often go unnoticed when observed from the ground. Early-stage pest outbreaks or missing plants are hard to identify without an aerial perspective—and even when drone footage is available, interpreting it remains a technical barrier for non-experts.
 
-To solve this, we developed **FieldLens**: an offline-first, on-device AI assistant that analyzes cornfield drone videos, detects abnormal regions (such as sparse growth), and guides the user to generate intelligent questions about the observed issues. These questions are then routed to a local language model interface powered by **Gemma 3n**, which produces structured, multimodal answers based on retrieved context and visual evidence. Unlike cloud-based AI tools, FieldLens is designed for low-connectivi...
+To solve this, we developed **FieldLens**: an offline-first, on-device AI assistant that analyzes cornfield drone videos, detects abnormal regions (such as sparse growth), and guides the user to generate intelligent questions about the observed issues. These questions are then routed to a local language model interface powered by **Gemma 3n**, which produces structured, multimodal answers based on retrieved context and visual evidence. Unlike cloud-based AI tools, **FieldLens** is designed for low-connectivity and privacy-sensitive environments. Everything runs on the phone—video analysis, image segmentation, prompt generation, and ultimately, language-based insights. This ensures real-time, private, and actionable support for farmers, right in the field, without needing the internet.
 
-This ensures real-time, private, and actionable support for farmers, right in the field, without needing the internet.
-
-In this project, we demonstrate how the unique capabilities of Gemma 3n—such as on-device performance, multimodal understanding, and flexible prompt-based reasoning—enable a new kind of practical, deployable agricultural intelligence.
+In this project, we demonstrate how the unique capabilities of **Gemma 3n**—such as on-device performance, multimodal understanding, and flexible prompt-based reasoning—enable a new kind of practical, deployable agricultural intelligence.
 
 ## Approach
 
-The **FieldLens** pipeline begins with video input—typically drone or handheld footage captured in the field. To maintain full offline capability, all subsequent processing is performed on-device. From each video, representative frames are extracted and passed through a lightweight visual pipeline to:
+The **FieldLens** pipeline begins with video input—typically drone or handheld footage captured in the field. To maintain full offline capability, all subsequent processing is performed on-device. From each video, representative frames are extracted and passed through a lightweight visual pipeline to detect crop anomalies, generate domain-specific questions, and construct multimodal prompts for reasoning with **Gemma 3n**.
 
-- Detect crop anomalies  
-- Generate domain-specific questions  
-- Construct multimodal prompts for reasoning with **Gemma 3n**
-
-### Overview of Three Components:
+Our approach includes three components:
 
 1. **Anomaly Detection** (thresholding + morphology)  
 2. **Question Generation** (template-based, RAG-style)  
@@ -32,14 +26,18 @@ The **FieldLens** pipeline begins with video input—typically drone or handheld
 
 ### 1. Anomaly Detection (Thresholding + Morphology)
 
-Sparse crop regions exhibit lower green intensity and spatial discontinuity. We compute the **Excess Green Index (ExG)** to enhance vegetation contrast:
+Sparse crop regions typically exhibit lower green intensity and spatial discontinuity in aerial imagery. An Excess Green Index (ExG) is computed to enhance vegetation contrast and suppress non-plant background. Based on the ExG output, a rule-based segmentation pipeline extracts large, non-continuous low-green areas as anomaly candidates.
 
-- **ExG** = 2G - R - B  
-- Normalize to 8-bit grayscale  
-- Thresholding: T = 60  
-- Morphological filtering (Open → Close, 7×7 elliptical kernel)  
-- Connected components: Area ≥ 2000 px  
-- Top 50% of the image is masked to ignore horizon/sky
+Each extracted frame is processed using the following steps:
+
+- 'Input': RGB image ('.jpg'), resolution ~'1920×1080'
+- 'ExG computation': 'ExG = 2G - R - B'
+- 'Normalization': scaled to '8-bit grayscale' ('uint8', range '0–255')
+- 'Thresholding': binary inverse, 'T = 60'
+- 'Morphology': open → close, kernel = elliptical ('7×7')
+- 'Connected Components': area ≥ '2000 px', '8-connectivity'
+- 'Masking': zero out top '50%' of image ('mask[0:H//2, :] = 0')
+- 'Output': binary mask highlighting sparse regions
 
 **Output**: Binary mask highlighting sparse growth areas.
 
