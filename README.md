@@ -1,3 +1,5 @@
+[![Watch on YouTube](https://img.youtube.com/vi/YT33z4GDt5U/0.jpg)](https://www.youtube.com/watch?v=YT33z4GDt5U)
+
 # FieldLens: A Private, Offline AI Assistant for Detecting Corn Abnormalities
 
 ## Introduction
